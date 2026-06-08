@@ -220,8 +220,8 @@ export class Transport<
 	// Whether we can produce audio/video based on computed extended RTP
 	// capabilities.
 	private readonly _canProduceByKind: CanProduceByKind;
-	// SCTP max message size if enabled, null otherwise.
-	private readonly _maxSctpMessageSize?: number | null;
+	// SCTP max message size if enabled.
+	private readonly _maxSctpMessageSize?: number;
 	// RTC handler isntance.
 	private readonly _handler: HandlerInterface;
 	// Transport ICE gathering state.
@@ -295,9 +295,7 @@ export class Transport<
 		this._getSendExtendedRtpCapabilities = getSendExtendedRtpCapabilities;
 		this._recvRtpCapabilities = recvRtpCapabilities;
 		this._canProduceByKind = canProduceByKind;
-		this._maxSctpMessageSize = sctpParameters
-			? sctpParameters.maxMessageSize
-			: null;
+		this._maxSctpMessageSize = sctpParameters?.maxMessageSize;
 
 		// Clone and sanitize additionalSettings.
 		const clonedAdditionalSettings = utils.clone(additionalSettings) ?? {};
@@ -767,11 +765,13 @@ export class Transport<
 		return this._awaitQueue.push(async () => {
 			const { dataChannel, sctpStreamParameters } =
 				await this._handler.sendDataChannel({
-					ordered,
-					maxPacketLifeTime,
-					maxRetransmits,
-					label,
-					protocol,
+					sctpStreamParameters: {
+						ordered,
+						maxPacketLifeTime,
+						maxRetransmits,
+						label,
+						protocol,
+					},
 				});
 
 			// This will fill sctpStreamParameters's missing fields with default values.
@@ -851,6 +851,7 @@ export class Transport<
 		// Enqueue command.
 		return this._awaitQueue.push(async () => {
 			const { dataChannel } = await this._handler.receiveDataChannel({
+				maxMessageSize: this._maxSctpMessageSize!,
 				sctpStreamParameters: clonedSctpStreamParameters,
 				label,
 				protocol,
@@ -872,6 +873,10 @@ export class Transport<
 
 			return dataConsumer;
 		}, 'transport.consumeData()');
+	}
+
+	getDataChannelMaxMessageSize(): number | undefined {
+		return this._handler.getDataChannelMaxMessageSize();
 	}
 
 	// This method is guaranteed to never throw.
