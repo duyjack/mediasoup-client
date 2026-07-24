@@ -215,10 +215,6 @@ test('device.sendRtpCapabilities getter throws InvalidStateError if not loaded',
 	expect(() => ctx.device!.sendRtpCapabilities).toThrow(InvalidStateError);
 });
 
-test('device.sctpCapabilities getter throws InvalidStateError if not loaded', () => {
-	expect(() => ctx.device!.sctpCapabilities).toThrow(InvalidStateError);
-});
-
 test('device.canProduce() throws InvalidStateError if not loaded', () => {
 	expect(() => ctx.device!.canProduce('audio')).toThrow(InvalidStateError);
 });
@@ -294,10 +290,6 @@ test('device.recvRtpCapabilities getter succeeds', () => {
 
 test('device.sendRtpCapabilities getter succeeds', () => {
 	expect(typeof ctx.loadedDevice!.sendRtpCapabilities).toBe('object');
-});
-
-test('device.sctpCapabilities getter succeeds', () => {
-	expect(typeof ctx.loadedDevice!.sctpCapabilities).toBe('object');
 });
 
 test('device.canProduce() with "audio"/"video" kind returns true', () => {
@@ -1553,12 +1545,11 @@ test('transport.updateIceServers() rejects with InvalidStateError if closed', as
 test('connection state change does not fire "connectionstatechange" in closed Transport', () => {
 	let connectionStateChangeEventNumTimesCalled = 0;
 
-	ctx.connectedSendTransport!.on(
-		'connectionstatechange',
-		(/* connectionState */) => {
-			connectionStateChangeEventNumTimesCalled++;
-		}
-	);
+	ctx.connectedSendTransport!.on('connectionstatechange', (
+		/* connectionState */
+	) => {
+		connectionStateChangeEventNumTimesCalled++;
+	});
 
 	// @ts-expect-error --- On purpose.
 	ctx.connectedSendTransport!.handler.setConnectionState('disconnected');

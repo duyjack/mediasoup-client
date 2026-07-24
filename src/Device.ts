@@ -19,17 +19,12 @@ import type {
 	MediaKind,
 	ExtendedRtpCapabilities,
 } from './RtpParameters';
-import type { SctpCapabilities } from './SctpParameters';
 import type { AppData } from './types';
 
 const logger = new Logger('Device');
 
 export type BuiltinHandlerName =
-	| 'Chrome111'
-	| 'Chrome74'
-	| 'Firefox120'
-	| 'Safari12'
-	| 'ReactNative106';
+	'Chrome111' | 'Chrome74' | 'Firefox120' | 'Safari12' | 'ReactNative106';
 
 export type DeviceOptions = {
 	/**
@@ -141,8 +136,6 @@ export class Device {
 		audio: false,
 		video: false,
 	};
-	// Local SCTP capabilities.
-	private _sctpCapabilities?: SctpCapabilities;
 	// Observer instance.
 	protected readonly _observer: DeviceObserver =
 		new EnhancedEventEmitter<DeviceObserverEvents>();
@@ -296,19 +289,6 @@ export class Device {
 		return this._sendRtpCapabilities!;
 	}
 
-	/**
-	 * SCTP capabilities of the Device.
-	 *
-	 * @throws {InvalidStateError} if not loaded.
-	 */
-	get sctpCapabilities(): SctpCapabilities {
-		if (!this._loaded) {
-			throw new InvalidStateError('not loaded');
-		}
-
-		return this._sctpCapabilities!;
-	}
-
 	get observer(): DeviceObserver {
 		return this._observer;
 	}
@@ -337,8 +317,7 @@ export class Device {
 		// This may throw.
 		ortc.validateAndNormalizeRtpCapabilities(clonedRouterRtpCapabilities);
 
-		const { getNativeRtpCapabilities, getNativeSctpCapabilities } =
-			this._handlerFactory;
+		const { getNativeRtpCapabilities } = this._handlerFactory;
 
 		const clonedNativeRecvRtpCapabilities = utils.clone<RtpCapabilities>(
 			await getNativeRtpCapabilities({ direction: 'recvonly' })
@@ -422,17 +401,6 @@ export class Device {
 		this._canProduceByKind.video = ortc.canSend(
 			'video',
 			this._sendRtpCapabilities
-		);
-
-		// Generate our SCTP capabilities.
-		this._sctpCapabilities = await getNativeSctpCapabilities();
-
-		// This may throw.
-		ortc.validateSctpCapabilities(this._sctpCapabilities);
-
-		logger.debug(
-			'load() | got native SCTP capabilities:%o',
-			this._sctpCapabilities
 		);
 
 		logger.debug('load() succeeded');
